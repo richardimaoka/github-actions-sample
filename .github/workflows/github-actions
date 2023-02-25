@@ -1,0 +1,33 @@
+#
+# GitHub - Workflow syntax for GitHub Actions https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+#
+name: Deploy to Cloud Run from Source
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    environment: dev
+    # Add 'id-token' with the intended permissions for workload identity federation
+    permissions:
+      contents: "read"
+      id-token: "write" # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#adding-permissions-settings
+
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout MUST come before "google-github-actions/auth" https://github.com/google-github-actions/auth
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: print
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Google Auth
+        id: auth
+        uses: "google-github-actions/auth@v1"
+        with:
+          workload_identity_provider: "${{ secrets.WIF_PROVIDER }}" # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+          service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}" # e.g. - my-service-account@my-project.iam.gserviceaccount.com
